@@ -1,0 +1,2 @@
+# One upstream path per line. Every path any patch in this directory touches.
+# scripts/revert-patches.sh restores these; the pre-commit hook refuses to commit them.

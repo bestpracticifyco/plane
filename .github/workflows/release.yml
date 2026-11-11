@@ -1,0 +1,110 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Release: build six generic images, scan (Trivy), push to GHCR (private packages), sign (Cosign keyless),
+# publish a digest manifest. Runs only on release tags vX.Y.Z-bp.N or manual dispatch (sha-<commit>).
+name: release
+on:
+  push:
+    tags: ["v*-bp.*"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+env:
+  REGISTRY: ghcr.io/bestpracticifyco
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { image: plane-frontend, context: ".", dockerfile: apps/web/Dockerfile.web }
+          - { image: plane-admin, context: ".", dockerfile: apps/admin/Dockerfile.admin }
+          - { image: plane-space, context: ".", dockerfile: apps/space/Dockerfile.space }
+          - { image: plane-live, context: ".", dockerfile: apps/live/Dockerfile.live }
+          - { image: plane-backend, context: apps/api, dockerfile: apps/api/Dockerfile.api }
+          - { image: plane-proxy, context: apps/proxy, dockerfile: apps/proxy/Dockerfile.ce }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: Apply patches (fails the build on a rejected hunk)
+        run: scripts/apply-patches.sh
+      - id: v
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = tag ]; then echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"; else echo "tag=sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"; fi
+          echo "upstream=$(cat UPSTREAM_TAG)" >> "$GITHUB_OUTPUT"
+          echo "patchset=$(cat patches/*.patch 2>/dev/null | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ matrix.image }}
+          tags: |
+            type=raw,value=${{ steps.v.outputs.tag }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/bestpracticifyco/plane
+            org.opencontainers.image.description=Plane Community Edition fork with plane_ext (${{ matrix.image }})
+            org.opencontainers.image.licenses=AGPL-3.0-only
+            org.opencontainers.image.version=${{ steps.v.outputs.tag }}
+            co.bestpracticify.upstream_tag=${{ steps.v.outputs.upstream }}
+            co.bestpracticify.patchset=${{ steps.v.outputs.patchset }}
+      - name: Build (load locally for scanning)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          load: true
+          push: false
+          tags: scan/${{ matrix.image }}:ci
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+      - name: Trivy scan (fail on fixable CRITICAL; HIGH tracked via .trivyignore)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: scan/${{ matrix.image }}:ci
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          trivyignores: .trivyignore
+      - name: Secret scan over image history
+        run: |
+          if docker history --no-trunc scan/${{ matrix.image }}:ci | grep -E '(AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|github_pat_|sk-ant-|-----BEGIN [A-Z ]*PRIVATE KEY-----)'; then
+            echo "secret-like value found in image layers"; exit 1; fi
+      - id: push
+        name: Push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+      - name: Sign by digest (keyless, GitHub OIDC)
+        run: cosign sign --yes "${{ env.REGISTRY }}/${{ matrix.image }}@${{ steps.push.outputs.digest }}"
+      - name: Record digest
+        run: |
+          mkdir -p digests
+          echo "${{ matrix.image }}: ${{ env.REGISTRY }}/${{ matrix.image }}@${{ steps.push.outputs.digest }}" > "digests/${{ matrix.image }}.txt"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with: { name: "digest-${{ matrix.image }}", path: digests/ }
+  manifest:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with: { pattern: "digest-*", merge-multiple: true, path: digests }
+      - name: Write deploy manifest
+        run: |
+          T="${GITHUB_REF_NAME}"; [ "${GITHUB_REF_TYPE}" = tag ] || T="sha-${GITHUB_SHA::12}"
+          { echo "release: $T"; echo "upstream_tag: $(cat UPSTREAM_TAG)"; echo "commit: $GITHUB_SHA"; echo "images:"; sed 's/^/  /' digests/*.txt; } > "manifest-$T.yaml"
+          cat "manifest-$T.yaml"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with: { name: deploy-manifest, path: "manifest-*.yaml" }
