@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Best Practicify LLC. This file is part of a fork of Plane (https://github.com/makeplane/plane).
+# Title: Work-item detail sidebar renders plane_ext properties beneath Labels
+# Insertion point: apps/web/core/components/issues/issue-detail/sidebar.tsx
+# Upstream tag: v1.4.3
+# Hunks: 2   Added lines: 2   Deleted lines: 0
+# FR: FR-EXT-020, FR-EXT-022
+# Owner approval: 2026-11-11 (gate H6)
+diff --git a/apps/web/core/components/issues/issue-detail/sidebar.tsx b/apps/web/core/components/issues/issue-detail/sidebar.tsx
+index 8077c4ef9..635284df5 100644
+--- a/apps/web/core/components/issues/issue-detail/sidebar.tsx
++++ b/apps/web/core/components/issues/issue-detail/sidebar.tsx
+@@ -42,6 +42,7 @@ import { IssueCycleSelect } from "./cycle-select";
+ import { IssueLabel } from "./label";
+ import { IssueModuleSelect } from "./module-select";
+ import type { TIssueOperations } from "./root";
++import { ExtPropertiesPanel } from "@/ext/components/properties/ext-properties-panel";
+ 
+ type Props = {
+   workspaceSlug: string;
+@@ -248,6 +249,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props:
+                 disabled={!isEditable}
+               />
+             </SidebarPropertyListItem>
++            <ExtPropertiesPanel workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={!isEditable} />
+           </div>
+         </div>
+       </div>

@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Best Practicify LLC. This file is part of a fork of Plane (https://github.com/makeplane/plane).
+# Title: AGPL source-offer link in the application shell
+# Insertion point: apps/web/app/root.tsx
+# Upstream tag: v1.4.3
+# FR: FR-EXT-070
+# Owner approval: 2026-11-11 (gate H6) — hunk count re-approval pending (import lines)
+diff --git a/apps/web/app/root.tsx b/apps/web/app/root.tsx
+index 08a38e632..3282e0903 100644
+--- a/apps/web/app/root.tsx
++++ b/apps/web/app/root.tsx
+@@ -28,6 +28,7 @@ import { LogoSpinner } from "@/components/common/logo-spinner";
+ import { isStaleAssetError, recoverFromStaleAsset } from "@/lib/stale-asset-error";
+ // local
+ import { CustomErrorComponent } from "./error";
++import { ExtSourceOffer } from "@/ext/components/source-offer";
+ import { AppProvider } from "./provider";
+ // fonts
+ import "@fontsource-variable/inter";
+@@ -129,6 +130,7 @@ export default function Root() {
+         <main className="relative h-full w-full overflow-hidden">
+           <Outlet />
+         </main>
++        <ExtSourceOffer />
+       </div>
+     </AppProvider>
+   );

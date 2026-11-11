@@ -1,2 +1,9 @@
 # One upstream path per line. Every path any patch in this directory touches.
 # scripts/revert-patches.sh restores these; the pre-commit hook refuses to commit them.
+apps/web/core/components/issues/issue-detail/sidebar.tsx
+apps/web/core/components/issues/issue-layouts/filters/header/display-filters/display-properties.tsx
+apps/web/core/components/issues/issue-layouts/spreadsheet/spreadsheet-header.tsx
+apps/web/core/components/issues/issue-layouts/spreadsheet/issue-row.tsx
+apps/web/core/components/issues/issue-layouts/properties/all-properties.tsx
+apps/web/app/root.tsx
+packages/constants/src/workspace.ts

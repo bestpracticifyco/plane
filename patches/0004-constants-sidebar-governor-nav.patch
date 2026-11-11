@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Best Practicify LLC. This file is part of a fork of Plane (https://github.com/makeplane/plane).
+# Title: Governor entry in the workspace sidebar navigation
+# Insertion point: packages/constants/src/workspace.ts
+# Upstream tag: v1.4.3
+# FR: FR-EXT-063
+# Owner approval: 2026-11-11 (gate H6) — hunk count re-approval pending (import lines)
+diff --git a/packages/constants/src/workspace.ts b/packages/constants/src/workspace.ts
+index 6083c7719..565e1b573 100644
+--- a/packages/constants/src/workspace.ts
++++ b/packages/constants/src/workspace.ts
+@@ -220,12 +220,20 @@ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS: Record<string, IWorkspa
+     access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
+     highlight: (pathname: string, url: string) => pathname.includes(url),
+   },
++  governor: {
++    key: "governor",
++    labelTranslationKey: "Governor",
++    href: `/governor/`,
++    access: [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
++    highlight: (pathname: string, url: string) => pathname.includes(url),
++  },
+ };
+ 
+ export const WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS_LINKS: IWorkspaceSidebarNavigationItem[] = [
+   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["views"],
+   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["analytics"],
+   WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["archives"],
++  WORKSPACE_SIDEBAR_DYNAMIC_NAVIGATION_ITEMS["governor"],
+ ];
+ 
+ export const WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS: Record<string, IWorkspaceSidebarNavigationItem> = {

@@ -1,0 +1,87 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Best Practicify LLC. This file is part of a fork of Plane (https://github.com/makeplane/plane).
+# Title: List/Spreadsheet custom-property columns and display-property toggles
+# Insertion point: issue-layouts: display-properties, spreadsheet-header, issue-row, all-properties
+# Upstream tag: v1.4.3
+# FR: FR-EXT-021
+# Owner approval: 2026-11-11 (gate H6) — hunk count re-approval pending (import lines)
+diff --git a/apps/web/core/components/issues/issue-layouts/filters/header/display-filters/display-properties.tsx b/apps/web/core/components/issues/issue-layouts/filters/header/display-filters/display-properties.tsx
+index 3eeccb58b..d310d02d4 100644
+--- a/apps/web/core/components/issues/issue-layouts/filters/header/display-filters/display-properties.tsx
++++ b/apps/web/core/components/issues/issue-layouts/filters/header/display-filters/display-properties.tsx
+@@ -14,6 +14,7 @@ import { useTranslation } from "@plane/i18n";
+ import type { IIssueDisplayProperties } from "@plane/types";
+ // components
+ import { FilterHeader } from "../helpers/filter-header";
++import { ExtDisplayPropertyToggles } from "@/ext/components/properties/ext-layout-columns";
+ 
+ type Props = {
+   displayProperties: IIssueDisplayProperties;
+@@ -86,6 +87,7 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
+               </button>
+             </>
+           ))}
++          <ExtDisplayPropertyToggles />
+         </div>
+       )}
+     </>
+diff --git a/apps/web/core/components/issues/issue-layouts/properties/all-properties.tsx b/apps/web/core/components/issues/issue-layouts/properties/all-properties.tsx
+index cd2ffbffc..96e98f3a9 100644
+--- a/apps/web/core/components/issues/issue-layouts/properties/all-properties.tsx
++++ b/apps/web/core/components/issues/issue-layouts/properties/all-properties.tsx
+@@ -45,6 +45,7 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
+ // local components
+ import { IssuePropertyLabels } from "./labels";
+ import { WithDisplayPropertiesHOC } from "./with-display-properties-HOC";
++import { ExtListProperties } from "@/ext/components/properties/ext-layout-columns";
+ 
+ export interface IIssueProperties {
+   issue: TIssue;
+@@ -499,6 +500,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
+           maxRender={3}
+         />
+       </WithDisplayPropertiesHOC>
++      <ExtListProperties issue={issue} />
+     </div>
+   );
+ });
+diff --git a/apps/web/core/components/issues/issue-layouts/spreadsheet/issue-row.tsx b/apps/web/core/components/issues/issue-layouts/spreadsheet/issue-row.tsx
+index 278a39437..08088db48 100644
+--- a/apps/web/core/components/issues/issue-layouts/spreadsheet/issue-row.tsx
++++ b/apps/web/core/components/issues/issue-layouts/spreadsheet/issue-row.tsx
+@@ -35,6 +35,7 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
+ import type { TRenderQuickActions } from "../list/list-view-types";
+ import { isIssueNew } from "../utils";
+ import { IssueColumn } from "./issue-column";
++import { ExtSpreadsheetCells } from "@/ext/components/properties/ext-layout-columns";
+ 
+ interface Props {
+   displayProperties: IIssueDisplayProperties;
+@@ -396,6 +397,7 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
+           isEstimateEnabled={isEstimateEnabled}
+         />
+       ))}
++      <ExtSpreadsheetCells issue={issueDetail} disabled={disableUserActions} />
+     </>
+   );
+ });
+diff --git a/apps/web/core/components/issues/issue-layouts/spreadsheet/spreadsheet-header.tsx b/apps/web/core/components/issues/issue-layouts/spreadsheet/spreadsheet-header.tsx
+index c9e2bee54..2902b9f71 100644
+--- a/apps/web/core/components/issues/issue-layouts/spreadsheet/spreadsheet-header.tsx
++++ b/apps/web/core/components/issues/issue-layouts/spreadsheet/spreadsheet-header.tsx
+@@ -16,6 +16,7 @@ import { MultipleSelectGroupAction } from "@/components/core/multiple-select";
+ // hooks
+ import type { TSelectionHelper } from "@/hooks/use-multiple-select";
+ import { SpreadsheetHeaderColumn } from "./spreadsheet-header-column";
++import { ExtSpreadsheetHeaderColumns } from "@/ext/components/properties/ext-layout-columns";
+ 
+ interface Props {
+   displayProperties: IIssueDisplayProperties;
+@@ -87,6 +88,7 @@ export const SpreadsheetHeader = observer(function SpreadsheetHeader(props: Prop
+             isEpic={isEpic}
+           />
+         ))}
++        <ExtSpreadsheetHeaderColumns />
+       </tr>
+     </thead>
+   );
