@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Fork CI: discipline gate, web lint/types, API test suite. Actions pinned by commit SHA.
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main, "bp/**"]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  discipline:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, persist-credentials: false }
+      - name: Fork discipline (forbidden paths, migrations, SPDX, no licence code)
+        run: scripts/check-fork-discipline.sh
+      - name: Patches apply cleanly
+        run: scripts/apply-patches.sh --check
+      - name: No inherited upstream workflows
+        run: |
+          for w in build-branch check-version codeql copyright-check feature-deployment i18n-sync-check pull-request-build-lint-api pull-request-build-lint-web-apps react-doctor; do
+            test ! -f ".github/workflows/$w.yml" || { echo "upstream workflow $w.yml must be removed (FR-EXT-098)"; exit 1; }
+          done
+  lint-web:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "22.18.0", cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: scripts/apply-patches.sh
+      - run: pnpm turbo run check:lint check:types --filter=web --filter=admin --filter=space
+  test-api:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: cp apps/api/.env.example apps/api/.env
+      - run: docker compose -f docker-compose-test.yml up --build --abort-on-container-exit --exit-code-from api-tests

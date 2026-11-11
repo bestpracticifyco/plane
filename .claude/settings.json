@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(docker compose down -v*)",
+      "Edit(apps/web/core/components/**)",
+      "Edit(apps/web/app/routes/core.ts)",
+      "Edit(apps/api/plane/db/**)",
+      "Edit(apps/api/plane/settings/common.py)",
+      "Edit(apps/api/plane/settings/production.py)",
+      "Edit(apps/api/plane/urls.py)",
+      "Edit(apps/api/plane/utils/instance_config_variables/core.py)",
+      "Edit(**/Dockerfile.*)",
+      "Edit(LICENSE.txt)",
+      "Edit(COPYRIGHT.txt)"
+    ]
+  }
+}

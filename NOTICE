@@ -1,0 +1,32 @@
+Best Practicify fork of Plane
+=============================
+
+This repository is a modified version of Plane Community Edition
+(https://github.com/makeplane/plane), licensed under the GNU Affero General
+Public License v3.0 only (AGPL-3.0-only). See LICENSE.txt. Copyright in the
+upstream work remains with Plane Software, Inc. and contributors.
+
+Modified by: Best Practicify LLC (https://github.com/bestpracticifyco/plane)
+Upstream base tag: v1.4.3   (also recorded in UPSTREAM_TAG)
+Last rebase: 2026-11-11
+
+Categories of modification
+--------------------------
+1. Satellite Django app `plane_ext` at apps/api/plane/ext/ with its own tables
+   and migrations (workspace-scoped custom properties, feature flags, embed
+   hand-off tokens). Upstream models and migrations are untouched.
+2. Settings overlay apps/api/plane/settings/bp.py selected by
+   DJANGO_SETTINGS_MODULE (no edit to upstream settings).
+3. Frontend extension code under apps/web/core/ext/ and apps/web/app/ext/,
+   registered through upstream's `extended.*` seam files.
+4. Build-time patch files under patches/ (listed in patches/README.md),
+   applied to a small, counted set of upstream files.
+5. CI, release and deployment files; removal of upstream CI workflows.
+
+No Plane Commercial Edition code, images or UI were consulted or copied.
+This fork contains no licensing, plan or paid-tier code.
+
+Complete corresponding source
+-----------------------------
+The complete source of any running image is this repository at the git tag
+matching the image's `org.opencontainers.image.version` label.
