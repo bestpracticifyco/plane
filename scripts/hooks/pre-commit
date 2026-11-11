@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-only
+# Refuse commits that stage a patched upstream file (patches apply at build time only).
+set -euo pipefail
+[ -s patches/paths.txt ] || exit 0
+staged=$(git diff --cached --name-only)
+for p in $(grep -vE '^\s*(#|$)' patches/paths.txt); do
+  if printf '%s\n' "$staged" | grep -qxF "$p"; then
+    echo "pre-commit: $p is a patched upstream file — regenerate its patch and run scripts/revert-patches.sh" >&2; exit 1
+  fi
+done
