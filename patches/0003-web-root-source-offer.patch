@@ -4,7 +4,7 @@
 # Insertion point: apps/web/app/root.tsx
 # Upstream tag: v1.4.3
 # FR: FR-EXT-070
-# Owner approval: 2026-11-11 (gate H6) — hunk count re-approval pending (import lines)
+# Owner approval: 2026-11-11 (gate H6 re-approved: 4 files, 13 hunks, 20 added lines)
 diff --git a/apps/web/app/root.tsx b/apps/web/app/root.tsx
 index 08a38e632..3282e0903 100644
 --- a/apps/web/app/root.tsx

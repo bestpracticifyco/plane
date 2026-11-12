@@ -16,7 +16,7 @@ Never add licence, plan, Prime or paid-tier code. Never consult Plane Commercial
    `apps/api/plane/urls.py`, `apps/api/plane/utils/instance_config_variables/core.py`,
    any upstream `Dockerfile.*`, `LICENSE.txt`, `COPYRIGHT.txt`.
    The only way to change an upstream file outside a seam is a patch in `patches/`.
-   Patch ceiling (owner gate H6): 4 files, 9 hunks, 90 added lines, 0 deleted upstream lines.
+   Patch ceiling (owner gate H6, re-approved): 4 patch files, 13 hunks, 20 added lines, 0 deleted upstream lines.
 2. Seams you may edit: `apps/web/app/routes/extended.ts`, `apps/web/app/routes/redirects/extended/index.ts`,
    `apps/admin/providers/extended.tsx`, `apps/web/core/hooks/oauth/extended.tsx`,
    `apps/api/plane/utils/instance_config_variables/extended.py`, `apps/web/core/store/pages/extended-base-page.ts`,

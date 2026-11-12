@@ -10,7 +10,8 @@
 - Overlay code lives only in: `apps/api/plane/ext/`, `apps/api/plane/settings/bp.py`,
   `apps/web/core/ext/`, `apps/web/app/ext/`, and upstream's `extended.*` seam files.
 - Any other upstream file changes only through `patches/NNNN-*.patch`, applied at build time.
-  Owner-approved ceiling (gate H6, 11 Nov 2026): 4 files, 9 hunks, 90 added lines, 0 deleted lines.
+  Owner-approved ceiling (gate H6, re-approved 11 Nov 2026): 4 patch files, 13 hunks, 20 added lines,
+  0 deleted upstream lines. Exceeding any figure re-opens the gate.
 - `scripts/check-fork-discipline.sh` (CI job `discipline`) enforces forbidden paths, migration
   location, SPDX headers and the no-licence-code rule, and prints the ledger below.
 - A fork migration, once applied to production, is never edited again.
@@ -18,7 +19,11 @@
 ## Patch / upstream-file ledger
 | # | Patch | Upstream file(s) | Hunks | +Lines | FR | Status |
 |---|---|---|---|---|---|---|
-| — | (none yet) | | | | | |
+| 0001 | sidebar ext panel | apps/web/core/components/issues/issue-detail/sidebar.tsx | 2 | 2 | FR-EXT-020/022 | approved |
+| 0002 | layout columns | issue-layouts: display-properties, spreadsheet-header, issue-row, all-properties | 8 | 8 | FR-EXT-021 | approved |
+| 0003 | source offer | apps/web/app/root.tsx | 2 | 2 | FR-EXT-070 | approved |
+| 0004 | Governor nav | packages/constants/src/workspace.ts | 1 | 8 | FR-EXT-063 | approved |
+| seam | extended routes | apps/web/app/routes/extended.ts (seam, edited directly) | — | — | FR-EXT-060 | n/a |
 
 ## Images and registry
 - CI (`release.yml`) builds six generic images to `ghcr.io/bestpracticifyco/plane-*`

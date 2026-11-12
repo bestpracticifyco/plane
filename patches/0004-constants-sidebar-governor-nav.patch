@@ -4,7 +4,7 @@
 # Insertion point: packages/constants/src/workspace.ts
 # Upstream tag: v1.4.3
 # FR: FR-EXT-063
-# Owner approval: 2026-11-11 (gate H6) — hunk count re-approval pending (import lines)
+# Owner approval: 2026-11-11 (gate H6 re-approved: 4 files, 13 hunks, 20 added lines)
 diff --git a/packages/constants/src/workspace.ts b/packages/constants/src/workspace.ts
 index 6083c7719..565e1b573 100644
 --- a/packages/constants/src/workspace.ts
