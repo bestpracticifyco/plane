@@ -10,3 +10,14 @@
 CVE-2026-30242
 
 # --- Best Practicify fork: add entries below as CVE-ID, preceded by '# justification; expires YYYY-MM-DD' ---
+
+# 2026-11-11 — owner-approved time-boxed exceptions for the live and space images (upstream v1.4.3 Node deps).
+# Re-evaluate at the next upstream rebase; each entry also expires on its own date.
+# proxy-addr IP spoofing: only reachable when Express "trust proxy" is enabled. Neither
+# @react-router/serve 7.17.0 (space) nor apps/live sets it; live reads req.ip only for a log line.
+CVE-2026-90711 exp:2026-12-31
+# storybook: UI development tool bundled via workspace node_modules; never executed in production.
+CVE-2026-114125 exp:2026-12-31
+# tinypool: vitest worker pool (test tooling); never executed in production.
+CVE-2026-104848 exp:2026-12-31
+CVE-2026-104849 exp:2026-12-31
