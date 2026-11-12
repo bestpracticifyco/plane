@@ -10,8 +10,9 @@
 - Overlay code lives only in: `apps/api/plane/ext/`, `apps/api/plane/settings/bp.py`,
   `apps/web/core/ext/`, `apps/web/app/ext/`, and upstream's `extended.*` seam files.
 - Any other upstream file changes only through `patches/NNNN-*.patch`, applied at build time.
-  Owner-approved ceiling (gate H6, re-approved 11 Nov 2026): 4 patch files, 13 hunks, 20 added lines,
-  0 deleted upstream lines. Exceeding any figure re-opens the gate.
+  Owner-approved ceiling (gate H6, re-opened and approved 11 Nov 2026): 5 patch files, 14 hunks,
+  21 added lines; 0 deleted upstream lines except the one-line dependency pin replaced by patch 0005.
+  Exceeding any figure re-opens the gate. Patch 0005 is dropped when upstream pins PyJWT >= 2.14.0.
 - `scripts/check-fork-discipline.sh` (CI job `discipline`) enforces forbidden paths, migration
   location, SPDX headers and the no-licence-code rule, and prints the ledger below.
 - A fork migration, once applied to production, is never edited again.
@@ -23,6 +24,7 @@
 | 0002 | layout columns | issue-layouts: display-properties, spreadsheet-header, issue-row, all-properties | 8 | 8 | FR-EXT-021 | approved |
 | 0003 | source offer | apps/web/app/root.tsx | 2 | 2 | FR-EXT-070 | approved |
 | 0004 | Governor nav | packages/constants/src/workspace.ts | 1 | 8 | FR-EXT-063 | approved |
+| 0005 | PyJWT 2.14.0 (CVE-2026-102268) | apps/api/requirements/base.txt | 1 | 1 (replaces 1) | FR-EXT-112 | approved, temporary |
 | seam | extended routes | apps/web/app/routes/extended.ts (seam, edited directly) | — | — | FR-EXT-060 | n/a |
 
 ## Images and registry

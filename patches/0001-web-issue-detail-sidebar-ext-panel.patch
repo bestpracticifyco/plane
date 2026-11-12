@@ -5,7 +5,7 @@
 # Upstream tag: v1.4.3
 # Hunks: 2   Added lines: 2   Deleted lines: 0
 # FR: FR-EXT-020, FR-EXT-022
-# Owner approval: 2026-11-11 (gate H6 re-approved: 4 files, 13 hunks, 20 added lines)
+# Owner approval: 2026-11-11 (gate H6: 5 patch files, 14 hunks, 21 added lines)
 diff --git a/apps/web/core/components/issues/issue-detail/sidebar.tsx b/apps/web/core/components/issues/issue-detail/sidebar.tsx
 index 8077c4ef9..635284df5 100644
 --- a/apps/web/core/components/issues/issue-detail/sidebar.tsx
