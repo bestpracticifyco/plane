@@ -7,3 +7,4 @@ apps/web/core/components/issues/issue-layouts/spreadsheet/issue-row.tsx
 apps/web/core/components/issues/issue-layouts/properties/all-properties.tsx
 apps/web/app/root.tsx
 packages/constants/src/workspace.ts
+apps/api/requirements/base.txt
