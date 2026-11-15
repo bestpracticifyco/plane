@@ -32,6 +32,7 @@ FLAG_DEFAULTS = {
     "ext.embeds": True,
     "ext.footer": True,
     "ext.enforce_required": False,  # blocks leaving Backlog while a required property is empty
+    "ext.require_module": False,  # blocks leaving Backlog until the item is in a module (projects with modules)
     "ext.activity_mirror_comment": False,
 }
 _FLAG_CACHE_SECONDS = 60
@@ -240,6 +241,20 @@ def write_value(issue, definition, value, actor):
         if new != old:
             ExtActivity.objects.create(issue=issue, definition=definition, actor=actor, old_value=old, new_value=new)
         return row
+
+
+def needs_module(issue):
+    """True when the item's project has active modules and the item is in none of them (FR-EXT-012a).
+
+    BP Accounting keeps Function as the project's modules, not a property (owner, 2026-11-15), so the
+    "Function is required" gate checks module membership. Projects without modules are never blocked.
+    """
+    from plane.db.models import Module, ModuleIssue
+
+    active = Module.objects.filter(project_id=issue.project_id, archived_at__isnull=True)
+    if not active.exists():
+        return False
+    return not ModuleIssue.objects.filter(issue_id=issue.id, module__in=active).exists()
 
 
 def missing_required(issue):

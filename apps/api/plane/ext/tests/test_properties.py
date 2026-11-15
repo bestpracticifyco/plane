@@ -132,6 +132,51 @@ def test_ac_012_required_blocks_leaving_backlog(client_for, people, base, projec
         issue.save()  # now allowed
 
 
+def _module(project, name, archived=False):
+    from django.utils import timezone
+
+    from plane.db.models import Module
+
+    return Module.objects.create(
+        name=name, project=project, workspace=project.workspace, archived_at=timezone.now() if archived else None
+    )
+
+
+def _start(issue, states, user):
+    from crum import impersonate
+
+    issue.refresh_from_db()
+    issue.state = states["started"]
+    with impersonate(user):
+        issue.save()
+
+
+def test_ac_012a_module_required_to_leave_backlog(people, project, issue, states, ws):
+    from rest_framework.exceptions import ValidationError
+
+    from plane.db.models import ModuleIssue
+
+    services.set_flags(ws.id, {"ext.require_module": True})
+    ap = _module(project, "Accounts Payable")
+    old = _module(project, "Payroll", archived=True)
+    ModuleIssue.objects.create(module=old, issue=issue, project=project, workspace=ws)  # archived: does not count
+    with pytest.raises(ValidationError) as e:
+        _start(issue, states, people["member"])
+    assert "module" in str(e.value.detail["state_id"][0])
+    ModuleIssue.objects.create(module=ap, issue=issue, project=project, workspace=ws)
+    _start(issue, states, people["member"])  # now allowed
+
+
+def test_module_guard_skips_projects_without_modules(people, issue, states, ws):
+    services.set_flags(ws.id, {"ext.require_module": True})
+    _start(issue, states, people["member"])  # AF Training style: no modules, never blocked
+
+
+def test_module_guard_off_by_default(people, project, issue, states):
+    _module(project, "Accounts Payable")
+    _start(issue, states, people["member"])
+
+
 def test_required_guard_off_by_default(people, issue, states, bound):
     from crum import impersonate
 
