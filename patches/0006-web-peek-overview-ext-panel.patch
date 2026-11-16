@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (c) 2026 Best Practicify LLC. This file is part of a fork of Plane (https://github.com/makeplane/plane).
+# Title: Work-item peek overview renders plane_ext properties beneath Labels (same panel as 0001)
+# Insertion point: apps/web/core/components/issues/peek-overview/properties.tsx
+# Upstream tag: v1.4.3
+# Hunks: 2   Added lines: 2   Deleted lines: 0
+# FR: FR-EXT-020, FR-EXT-022
+# Owner approval: 2026-11-16 (gate H6 re-opened: 6 patch files, 16 hunks, 23 added lines)
+diff --git a/apps/web/core/components/issues/peek-overview/properties.tsx b/apps/web/core/components/issues/peek-overview/properties.tsx
+index 8f35cc164..08d2ef8c1 100644
+--- a/apps/web/core/components/issues/peek-overview/properties.tsx
++++ b/apps/web/core/components/issues/peek-overview/properties.tsx
+@@ -41,6 +41,7 @@ import type { TIssueOperations } from "../issue-detail";
+ import { IssueCycleSelect } from "../issue-detail/cycle-select";
+ import { IssueLabel } from "../issue-detail/label";
+ import { IssueModuleSelect } from "../issue-detail/module-select";
++import { ExtPropertiesPanel } from "@/ext/components/properties/ext-properties-panel";
+ 
+ interface IPeekOverviewProperties {
+   workspaceSlug: string;
+@@ -243,6 +244,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
+         <SidebarPropertyListItem icon={LabelPropertyIcon} label={t("common.labels")}>
+           <IssueLabel workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={disabled} />
+         </SidebarPropertyListItem>
++        <ExtPropertiesPanel workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={disabled} />
+       </div>
+     </div>
+   );
