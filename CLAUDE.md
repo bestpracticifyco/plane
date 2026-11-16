@@ -16,7 +16,7 @@ Never add licence, plan, Prime or paid-tier code. Never consult Plane Commercial
    `apps/api/plane/urls.py`, `apps/api/plane/utils/instance_config_variables/core.py`,
    any upstream `Dockerfile.*`, `LICENSE.txt`, `COPYRIGHT.txt`.
    The only way to change an upstream file outside a seam is a patch in `patches/`.
-   Patch ceiling (owner gate H6): 5 patch files, 14 hunks, 21 added lines, 0 deleted upstream lines
+   Patch ceiling (owner gate H6, last re-opened 2026-11-16): 6 patch files, 16 hunks, 23 added lines, 0 deleted upstream lines
    (sole exception: patch 0005 replaces the PyJWT pin; drop it when upstream ships >= 2.14.0).
 2. Seams you may edit: `apps/web/app/routes/extended.ts`, `apps/web/app/routes/redirects/extended/index.ts`,
    `apps/admin/providers/extended.tsx`, `apps/web/core/hooks/oauth/extended.tsx`,

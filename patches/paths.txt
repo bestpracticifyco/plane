@@ -8,3 +8,4 @@ apps/web/core/components/issues/issue-layouts/properties/all-properties.tsx
 apps/web/app/root.tsx
 packages/constants/src/workspace.ts
 apps/api/requirements/base.txt
+apps/web/core/components/issues/peek-overview/properties.tsx
