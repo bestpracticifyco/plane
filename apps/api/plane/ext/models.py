@@ -174,3 +174,43 @@ class ExtHandoffToken(BaseModel):
 
     class Meta:
         db_table = "plane_ext_handoff_tokens"
+
+
+class ExtPendingProjectGrant(BaseModel):
+    """Projects a person should land in when they join the workspace (access matrix "invite to projects").
+
+    Plane CE invites carry only a workspace role; these rows are applied when the WorkspaceMember appears
+    (signal for .create(), periodic sweep for upstream's bulk_create join paths) and then deleted.
+    """
+
+    workspace = models.ForeignKey("db.Workspace", on_delete=models.CASCADE, related_name="ext_pending_grants")
+    email = models.CharField(max_length=255)
+    project = models.ForeignKey("db.Project", on_delete=models.CASCADE, related_name="ext_pending_grants")
+    role = models.PositiveSmallIntegerField(default=15)
+
+    class Meta:
+        db_table = "plane_ext_pending_project_grants"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["workspace", "email", "project"],
+                condition=Q(deleted_at__isnull=True),
+                name="plane_ext_grant_unique_email_project",
+            )
+        ]
+
+
+class ExtAccessLog(BaseModel):
+    """Every project-membership change made through the access matrix (who, what, before, after)."""
+
+    workspace = models.ForeignKey("db.Workspace", on_delete=models.CASCADE, related_name="ext_access_log")
+    project = models.ForeignKey("db.Project", on_delete=models.CASCADE, related_name="ext_access_log")
+    member = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ext_access_changes")
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="ext_access_actions"
+    )
+    old_role = models.PositiveSmallIntegerField(null=True)
+    new_role = models.PositiveSmallIntegerField(null=True)
+
+    class Meta:
+        db_table = "plane_ext_access_log"
+        ordering = ("-created_at",)

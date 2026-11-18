@@ -6,6 +6,7 @@ from plane.settings.test import *  # noqa: F401,F403
 
 INSTALLED_APPS.append("plane.ext")  # noqa: F405
 ROOT_URLCONF = "plane.ext.urls_root"
+MIDDLEWARE = [*MIDDLEWARE, "plane.ext.middleware.AccessHardeningMiddleware"]  # noqa: F405
 PLANE_EXT = {
     "HANDOFF_TOKEN_TTL_SECONDS": 300,
     "HANDOFF_SIGNING_KEY": "test-signing-key-not-secret",

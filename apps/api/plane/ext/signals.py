@@ -10,11 +10,12 @@ user-initiated saves (a request user is present) to avoid breaking background ta
 """
 
 from crum import get_current_user
-from django.db.models.signals import pre_save
+from django.db import transaction
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from rest_framework.exceptions import ValidationError
 
-from plane.db.models import Issue, State
+from plane.db.models import Issue, Project, ProjectMember, State, WorkspaceMember
 
 from . import services
 
@@ -42,3 +43,42 @@ def required_property_guard(sender, instance, **kwargs):
             errors.append(f"Set required properties first: {', '.join(missing)}")
         if errors:
             raise ValidationError({"state_id": errors})
+
+
+# ---------------------------------------------------------------------------------------------
+# Project-level access hardening (flag ext.access_hardening)
+# ---------------------------------------------------------------------------------------------
+@receiver(pre_save, sender=Project, dispatch_uid="plane_ext_private_by_default")
+def private_by_default(sender, instance, **kwargs):
+    """New projects start Private (Secret), however they are created (web, API, Governor)."""
+    if instance._state.adding and instance.workspace_id and services.is_enabled(
+        instance.workspace_id, "ext.access_hardening"
+    ):
+        instance.network = 0
+
+
+@receiver(pre_save, sender=ProjectMember, dispatch_uid="plane_ext_project_role_cap")
+def project_role_cap(sender, instance, **kwargs):
+    """A project role may not exceed the person's workspace role. Upstream's web path checks this; the
+    public API (api/v1 projects/<id>/members/) does not, so a workspace Guest could be made project Admin."""
+    if not instance.member_id or not instance.is_active or not instance.workspace_id:
+        return
+    if not services.is_enabled(instance.workspace_id, "ext.access_hardening"):
+        return
+    ws_role = (
+        WorkspaceMember.objects.filter(workspace_id=instance.workspace_id, member_id=instance.member_id, is_active=True)
+        .values_list("role", flat=True)
+        .first()
+    )
+    if ws_role is not None and instance.role > ws_role:
+        raise ValidationError({"role": ["A project role cannot be higher than the person's workspace role."]})
+
+
+@receiver(post_save, sender=WorkspaceMember, dispatch_uid="plane_ext_apply_pending_grants")
+def apply_pending_grants(sender, instance, **kwargs):
+    """Someone joined (or was reactivated): put them in the projects pre-assigned on the access page."""
+    if not instance.is_active or not instance.member_id:
+        return
+    from . import access
+
+    transaction.on_commit(lambda: access.apply_grants_for(instance.workspace, instance.member))

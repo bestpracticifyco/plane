@@ -4,7 +4,7 @@
 
 from django.urls import path
 
-from . import views
+from . import views, views_access
 
 WS = "workspaces/<str:slug>"
 PRJ = WS + "/projects/<uuid:project_id>"
@@ -19,6 +19,9 @@ urlpatterns = [
     path(f"{WS}/values/bulk/", views.BulkValuesEndpoint.as_view(), name="ext-values-bulk"),
     path(f"{WS}/schema/", views.SchemaEndpoint.as_view(), name="ext-schema"),
     path(f"{WS}/flags/", views.FlagEndpoint.as_view(), name="ext-flags"),
+    path(f"{WS}/access/", views_access.AccessMatrixEndpoint.as_view(), name="ext-access"),
+    path(f"{WS}/access/grants/", views_access.AccessGrantEndpoint.as_view(), name="ext-access-grants"),
+    path(f"{WS}/access/log/", views_access.AccessLogEndpoint.as_view(), name="ext-access-log"),
     path(f"{WS}/handoff/", views.HandoffEndpoint.as_view(), name="ext-handoff"),
     path(f"{PRJ}/bindings/", views.BindingEndpoint.as_view(), name="ext-bindings"),
     path(f"{PRJ}/values/", views.ProjectValuesEndpoint.as_view(), name="ext-project-values"),

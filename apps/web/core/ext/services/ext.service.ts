@@ -5,7 +5,16 @@
 
 import { API_BASE_URL } from "@plane/constants";
 import { APIService } from "@/services/api.service";
-import type { TExtBinding, TExtDefinition, TExtFlags, TExtValue, TExtValueMap } from "../types";
+import type {
+  TExtAccessCell,
+  TExtAccessMatrix,
+  TExtBinding,
+  TExtDefinition,
+  TExtFlags,
+  TExtRole,
+  TExtValue,
+  TExtValueMap,
+} from "../types";
 
 const BASE = "/api/ext/v1/workspaces";
 
@@ -56,5 +65,14 @@ export class ExtService extends APIService {
     return this.call<{ token: string; expires_at: string; governor_url: string }>(
       this.post(`${BASE}/${ws}/handoff/`, {})
     );
+  }
+  getAccess(ws: string) {
+    return this.call<TExtAccessMatrix>(this.get(`${BASE}/${ws}/access/`));
+  }
+  setAccess(ws: string, cells: TExtAccessCell[]) {
+    return this.call<TExtAccessMatrix & { changed: number }>(this.put(`${BASE}/${ws}/access/`, { cells }));
+  }
+  setGrants(ws: string, email: string, grants: { project_id: string; role: TExtRole }[]) {
+    return this.call<TExtAccessMatrix>(this.put(`${BASE}/${ws}/access/grants/`, { email, grants }));
   }
 }

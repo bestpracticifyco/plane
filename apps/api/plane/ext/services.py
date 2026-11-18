@@ -34,6 +34,8 @@ FLAG_DEFAULTS = {
     "ext.enforce_required": False,  # blocks leaving Backlog while a required property is empty
     "ext.require_module": False,  # blocks leaving Backlog until the item is in a module (projects with modules)
     "ext.activity_mirror_comment": False,
+    "ext.access_hardening": False,  # private-by-default projects, role cap, analytics/estimates admin-only
+    "ext.recurrence": False,  # recurring work items
 }
 _FLAG_CACHE_SECONDS = 60
 
@@ -52,6 +54,14 @@ def get_flags(workspace_id):
             flags[key] = enabled
     cache.set(_flag_cache_key(workspace_id), flags, _FLAG_CACHE_SECONDS)
     return flags
+
+
+def is_enabled_for_slug(slug, key):
+    """Flag lookup by workspace slug (middleware has no workspace object). Unknown slug -> default."""
+    from plane.db.models import Workspace
+
+    ws_id = Workspace.objects.filter(slug=slug).values_list("id", flat=True).first()
+    return is_enabled(ws_id, key) if ws_id else FLAG_DEFAULTS.get(key, False)
 
 
 def is_enabled(workspace_id, key):

@@ -37,3 +37,23 @@ export type TExtValue = string | string[] | null;
 export type TExtValueMap = Record<string, Record<string, TExtValue>>;
 
 export type TExtFlags = Record<string, boolean>;
+
+/** Access matrix (workspace Admin only). Roles: 20 Admin, 15 Member, 5 Guest; null = not in project. */
+export type TExtRole = 20 | 15 | 5;
+export type TExtAccessProject = {
+  id: string;
+  identifier: string;
+  name: string;
+  is_private: boolean;
+  is_archived: boolean;
+};
+export type TExtAccessPerson = { id: string; email: string; display_name: string; workspace_role: TExtRole };
+export type TExtAccessGrant = { email: string; project_id: string; role: TExtRole };
+export type TExtAccessMatrix = {
+  projects: TExtAccessProject[];
+  people: TExtAccessPerson[];
+  /** memberId -> projectId -> role */
+  cells: Record<string, Record<string, TExtRole>>;
+  pending: TExtAccessGrant[];
+};
+export type TExtAccessCell = { member_id: string; project_id: string; role: TExtRole | null };
