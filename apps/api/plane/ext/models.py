@@ -6,6 +6,8 @@ Sidecar tables only: every foreign key points into Plane's tables and none adds 
 All models inherit Plane's BaseModel (UUID pk, audit fields, soft delete).
 """
 
+import datetime as dt
+
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
@@ -214,3 +216,86 @@ class ExtAccessLog(BaseModel):
     class Meta:
         db_table = "plane_ext_access_log"
         ordering = ("-created_at",)
+
+
+class RecurrenceTrigger(models.TextChoices):
+    COMPLETED = "completed", "When completed"
+    STATE = "state", "When it reaches a state"
+    SCHEDULE = "schedule", "On schedule"
+
+
+COPY_FIELDS = (
+    "description",
+    "assignees",
+    "labels",
+    "modules",
+    "cycle",
+    "priority",
+    "estimate",
+    "properties",
+    "sub_items",
+    "sub_item_assignees",
+    "remap_sub_item_dates",
+    "links",
+    "subscribers",
+    "parent",
+)
+
+
+def default_copy_fields():
+    return list(COPY_FIELDS)
+
+
+class ExtRecurrenceRule(BaseModel):
+    """One repeating series. `current_issue` is the live instance; spawning moves it forward."""
+
+    workspace = models.ForeignKey("db.Workspace", on_delete=models.CASCADE, related_name="ext_recurrence_rules")
+    project = models.ForeignKey("db.Project", on_delete=models.CASCADE, related_name="ext_recurrence_rules")
+    current_issue = models.ForeignKey("db.Issue", on_delete=models.SET_NULL, null=True, related_name="ext_recurrence")
+    schedule = models.JSONField()  # see plane.ext.recurrence
+    anchor = models.DateField()  # first due date of the series; fixes interval phase
+    trigger = models.CharField(max_length=16, choices=RecurrenceTrigger.choices, default=RecurrenceTrigger.COMPLETED)
+    trigger_state = models.ForeignKey("db.State", on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    create_new = models.BooleanField(default=True)  # False: reuse the same item (reset state, move dates)
+    new_state = models.ForeignKey("db.State", on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    copy_fields = ArrayField(models.CharField(max_length=32), default=default_copy_fields, blank=True)
+    end_count = models.PositiveIntegerField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    occurrences = models.PositiveIntegerField(default=0)
+    resync_on_due_change = models.BooleanField(default=False)
+    run_time = models.TimeField(default=dt.time(6, 0))  # workspace timezone
+    next_run_at = models.DateTimeField(null=True, blank=True)  # schedule trigger only
+    paused = models.BooleanField(default=False)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    last_spawned_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "plane_ext_recurrence_rules"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["current_issue"],
+                condition=Q(deleted_at__isnull=True, ended_at__isnull=True),
+                name="plane_ext_recurrence_one_live_rule_per_item",
+            )
+        ]
+        indexes = [models.Index(fields=["trigger", "next_run_at"], name="plane_ext_recur_due")]
+
+
+class ExtRecurrenceSpawn(BaseModel):
+    """Idempotency record: one row per (rule, period). A re-run for the same period is a no-op."""
+
+    rule = models.ForeignKey(ExtRecurrenceRule, on_delete=models.CASCADE, related_name="spawns")
+    period_key = models.CharField(max_length=32)  # the new due date, ISO
+    issue = models.ForeignKey("db.Issue", on_delete=models.SET_NULL, null=True, related_name="+")
+    reason = models.CharField(max_length=16)  # completed | state | schedule | sweep
+
+    class Meta:
+        db_table = "plane_ext_recurrence_spawns"
+        ordering = ("-created_at",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["rule", "period_key"],
+                condition=Q(deleted_at__isnull=True),
+                name="plane_ext_recurrence_spawn_once",
+            )
+        ]

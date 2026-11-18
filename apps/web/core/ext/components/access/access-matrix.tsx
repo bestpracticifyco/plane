@@ -55,8 +55,7 @@ export function AccessMatrix({ workspaceSlug }: { workspaceSlug: string }) {
     );
   }, [data, filter]);
 
-  if (denied)
-    return <div className="p-8 text-13 text-secondary">Only workspace admins can manage project access.</div>;
+  if (denied) return <div className="p-8 text-13 text-secondary">Only workspace admins can manage project access.</div>;
   if (!data) return null;
 
   const current = (memberId: string, projectId: string): TExtRole | null => {
@@ -121,8 +120,8 @@ export function AccessMatrix({ workspaceSlug }: { workspaceSlug: string }) {
       {publicProjects.length > 0 && (
         <div className="rounded-md border border-subtle bg-layer-1 px-3 py-2 text-13 text-secondary">
           Public projects are visible to every workspace member, whatever this grid says:{" "}
-          <span className="text-primary">{publicProjects.map((p) => p.identifier).join(", ")}</span>. Make them
-          private in Project settings → General.
+          <span className="text-primary">{publicProjects.map((p) => p.identifier).join(", ")}</span>. Make them private
+          in Project settings → General.
         </div>
       )}
 
@@ -219,8 +218,8 @@ function PendingGrants(props: {
         Pre-assign projects for an invitee ({Object.keys(byEmail).length} pending)
       </summary>
       <p className="mt-2 text-secondary">
-        Invite the person from Workspace settings → Members as usual. Choose their projects here; they are added
-        when they accept. A Guest invitee is always added as project Guest.
+        Invite the person from Workspace settings → Members as usual. Choose their projects here; they are added when
+        they accept. A Guest invitee is always added as project Guest.
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <input
@@ -256,9 +255,7 @@ function PendingGrants(props: {
               <input
                 type="checkbox"
                 checked={selected.includes(p.id)}
-                onChange={(e) =>
-                  setSelected((s) => (e.target.checked ? [...s, p.id] : s.filter((x) => x !== p.id)))
-                }
+                onChange={(e) => setSelected((s) => (e.target.checked ? [...s, p.id] : s.filter((x) => x !== p.id)))}
               />
               {p.identifier}
             </label>

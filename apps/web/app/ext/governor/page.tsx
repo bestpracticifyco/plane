@@ -7,9 +7,11 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { AccessMatrix } from "@/ext/components/access/access-matrix";
 import { GovernorFrame } from "@/ext/components/embeds/governor-frame";
+import { RecurringOverview } from "@/ext/components/recurrence/recurring-overview";
 
 const TABS = [
   { key: "console", label: "Governor" },
+  { key: "recurring", label: "Recurring" },
   { key: "access", label: "Project access" },
 ] as const;
 
@@ -32,7 +34,9 @@ export default function GovernorPage() {
         ))}
       </nav>
       <div className="min-h-0 flex-1">
-        {tab === "access" ? <AccessMatrix workspaceSlug={ws} /> : <GovernorFrame workspaceSlug={ws} page="console" />}
+        {tab === "access" && <AccessMatrix workspaceSlug={ws} />}
+        {tab === "recurring" && <RecurringOverview workspaceSlug={ws} />}
+        {tab !== "access" && tab !== "recurring" && <GovernorFrame workspaceSlug={ws} page="console" />}
       </div>
     </div>
   );

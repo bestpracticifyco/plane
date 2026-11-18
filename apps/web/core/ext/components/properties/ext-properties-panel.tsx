@@ -8,6 +8,7 @@ import { observer } from "mobx-react";
 import { LabelPropertyIcon } from "@plane/propel/icons";
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
 import { extStore } from "../../store/ext.store";
+import { RecurrenceRow } from "../recurrence/recurrence-row";
 import { ExtValueEditor } from "./ext-value-editor";
 
 type Props = {
@@ -17,18 +18,21 @@ type Props = {
   disabled: boolean;
 };
 
-/** Bound custom properties rendered beneath the native ones in the work-item sidebar (FR-EXT-020). */
+/** Bound custom properties, then the "Repeats" row, beneath the native ones in the work-item sidebar
+ *  and peek view (FR-EXT-020). Patches 0001/0006 render this component; nothing else is injected. */
 export const ExtPropertiesPanel = observer(function ExtPropertiesPanel(props: Props) {
   const { workspaceSlug, projectId, issueId, disabled } = props;
 
   useEffect(() => {
     if (!workspaceSlug || !projectId || !issueId) return;
-    void extStore.loadProject(workspaceSlug, projectId).then(() => extStore.loadIssueValues(workspaceSlug, projectId, issueId));
+    void extStore
+      .loadProject(workspaceSlug, projectId)
+      .then(() => extStore.loadIssueValues(workspaceSlug, projectId, issueId));
   }, [workspaceSlug, projectId, issueId]);
 
-  if (!extStore.isEnabled(workspaceSlug, "ext.properties") || !extStore.isEnabled(workspaceSlug, "ext.sidebar")) return null;
-  const definitions = extStore.boundDefinitions(workspaceSlug, projectId);
-  if (definitions.length === 0) return null;
+  const showProperties =
+    extStore.isEnabled(workspaceSlug, "ext.properties") && extStore.isEnabled(workspaceSlug, "ext.sidebar");
+  const definitions = showProperties ? extStore.boundDefinitions(workspaceSlug, projectId) : [];
 
   return (
     <>
@@ -39,7 +43,13 @@ export const ExtPropertiesPanel = observer(function ExtPropertiesPanel(props: Pr
             key={d.id}
             icon={LabelPropertyIcon}
             label={d.is_required ? `${d.name} *` : d.name}
-            appendElement={d.help_text ? <span title={d.help_text} className="cursor-help">ⓘ</span> : undefined}
+            appendElement={
+              d.help_text ? (
+                <span title={d.help_text} className="cursor-help">
+                  ⓘ
+                </span>
+              ) : undefined
+            }
           >
             <ExtValueEditor
               workspaceSlug={workspaceSlug}
@@ -52,6 +62,7 @@ export const ExtPropertiesPanel = observer(function ExtPropertiesPanel(props: Pr
           </SidebarPropertyListItem>
         );
       })}
+      <RecurrenceRow workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={disabled} />
     </>
   );
 });

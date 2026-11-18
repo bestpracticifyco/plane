@@ -8,6 +8,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import type { TIssue } from "@plane/types";
 import { extStore } from "../../store/ext.store";
+import { EXT_REPEATS_COLUMN_ID } from "../../types";
 import type { TExtDefinition, TExtValue } from "../../types";
 import { ExtValueEditor } from "./ext-value-editor";
 
@@ -25,6 +26,8 @@ function useColumnsReady(workspaceSlug: string, projectId: string, withValues: b
     void extStore.loadProject(workspaceSlug, projectId).then(() => {
       void extStore.loadColumns(workspaceSlug, projectId);
       if (withValues) void extStore.loadProjectValues(workspaceSlug, projectId);
+      if (withValues && extStore.isEnabled(workspaceSlug, "ext.recurrence"))
+        void extStore.loadProjectRepeats(workspaceSlug, projectId);
     });
   }, [workspaceSlug, projectId, withValues]);
 }
@@ -33,24 +36,42 @@ function columnsEnabled(workspaceSlug: string) {
   return extStore.isEnabled(workspaceSlug, "ext.properties") && extStore.isEnabled(workspaceSlug, "ext.columns");
 }
 
+/** The "Repeats" pseudo-column (recurrence summary), toggled like a property column. */
+function repeatsAvailable(workspaceSlug: string) {
+  return extStore.isEnabled(workspaceSlug, "ext.columns") && extStore.isEnabled(workspaceSlug, "ext.recurrence");
+}
+
+function repeatsVisible(workspaceSlug: string, projectId: string) {
+  return repeatsAvailable(workspaceSlug) && (extStore.columns[projectId] ?? []).includes(EXT_REPEATS_COLUMN_ID);
+}
+
 /** Toggle chips for bound properties in the Display-properties menu (FR-EXT-021). */
 export const ExtDisplayPropertyToggles = observer(function ExtDisplayPropertyToggles() {
   const { workspaceSlug, projectId } = useExtRoute();
   useColumnsReady(workspaceSlug, projectId, false);
-  if (!projectId || !columnsEnabled(workspaceSlug)) return null;
+  if (!projectId) return null;
   const visible = new Set(extStore.columns[projectId] ?? []);
+  const chips = [
+    ...(columnsEnabled(workspaceSlug) ? extStore.boundDefinitions(workspaceSlug, projectId) : []).map((d) => ({
+      id: d.id,
+      name: d.name,
+    })),
+    ...(repeatsAvailable(workspaceSlug) ? [{ id: EXT_REPEATS_COLUMN_ID, name: "Repeats" }] : []),
+  ];
   return (
     <>
-      {extStore.boundDefinitions(workspaceSlug, projectId).map((d) => (
+      {chips.map((c) => (
         <button
-          key={d.id}
+          key={c.id}
           type="button"
           className={`rounded-sm border px-2 py-0.5 text-11 transition-all ${
-            visible.has(d.id) ? "border-accent-strong bg-accent-primary text-on-color" : "border-subtle hover:bg-layer-1"
+            visible.has(c.id)
+              ? "border-accent-strong bg-accent-primary text-on-color"
+              : "border-subtle hover:bg-layer-1"
           }`}
-          onClick={() => void extStore.toggleColumn(workspaceSlug, projectId, d.id)}
+          onClick={() => void extStore.toggleColumn(workspaceSlug, projectId, c.id)}
         >
-          {d.name}
+          {c.name}
         </button>
       ))}
     </>
@@ -61,17 +82,18 @@ export const ExtDisplayPropertyToggles = observer(function ExtDisplayPropertyTog
 export const ExtSpreadsheetHeaderColumns = observer(function ExtSpreadsheetHeaderColumns() {
   const { workspaceSlug, projectId } = useExtRoute();
   useColumnsReady(workspaceSlug, projectId, true);
-  if (!projectId || !columnsEnabled(workspaceSlug)) return null;
+  if (!projectId) return null;
+  const th =
+    "h-11 min-w-36 items-center border border-t-0 border-b-0 border-subtle bg-layer-1 px-4 py-1 text-left text-13 font-medium";
   return (
     <>
-      {extStore.visibleColumns(workspaceSlug, projectId).map((d) => (
-        <th
-          key={d.id}
-          className="h-11 min-w-36 items-center border border-t-0 border-b-0 border-subtle bg-layer-1 px-4 py-1 text-left text-13 font-medium"
-        >
-          {d.name}
-        </th>
-      ))}
+      {columnsEnabled(workspaceSlug) &&
+        extStore.visibleColumns(workspaceSlug, projectId).map((d) => (
+          <th key={d.id} className={th}>
+            {d.name}
+          </th>
+        ))}
+      {repeatsVisible(workspaceSlug, projectId) && <th className={th}>Repeats</th>}
     </>
   );
 });
@@ -80,28 +102,37 @@ export const ExtSpreadsheetHeaderColumns = observer(function ExtSpreadsheetHeade
 export const ExtSpreadsheetCells = observer(function ExtSpreadsheetCells(props: { issue: TIssue; disabled: boolean }) {
   const { issue, disabled } = props;
   const { workspaceSlug, projectId } = useExtRoute(issue.project_id);
-  if (!projectId || !columnsEnabled(workspaceSlug)) return null;
+  if (!projectId) return null;
+  const td = "h-11 min-w-36 border-r-[1px] border-b-[0.5px] border-subtle text-13";
   return (
     <>
-      {extStore.visibleColumns(workspaceSlug, projectId).map((d) => (
-        <td key={d.id} className="h-11 min-w-36 border-r-[1px] border-b-[0.5px] border-subtle text-13">
-          <ExtValueEditor
-            workspaceSlug={workspaceSlug}
-            projectId={projectId}
-            issueId={issue.id}
-            definition={d}
-            disabled={disabled}
-            variant="cell"
-          />
-        </td>
-      ))}
+      {columnsEnabled(workspaceSlug) &&
+        extStore.visibleColumns(workspaceSlug, projectId).map((d) => (
+          <td key={d.id} className={td}>
+            <ExtValueEditor
+              workspaceSlug={workspaceSlug}
+              projectId={projectId}
+              issueId={issue.id}
+              definition={d}
+              disabled={disabled}
+              variant="cell"
+            />
+          </td>
+        ))}
+      {repeatsVisible(workspaceSlug, projectId) && (
+        <td className={`${td} px-2 text-secondary`}>{extStore.repeats[projectId]?.[issue.id] ?? ""}</td>
+      )}
     </>
   );
 });
 
 function displayValue(d: TExtDefinition, value: TExtValue): string {
   const ids = Array.isArray(value) ? value : value ? [value] : [];
-  if (d.type === "dropdown") return ids.map((id) => d.options.find((o) => o.id === id)?.name ?? "").filter(Boolean).join(", ");
+  if (d.type === "dropdown")
+    return ids
+      .map((id) => d.options.find((o) => o.id === id)?.name ?? "")
+      .filter(Boolean)
+      .join(", ");
   if (d.type === "member") return ids.length ? `${ids.length} member${ids.length > 1 ? "s" : ""}` : "";
   if (d.type === "datetime" && typeof value === "string") return new Date(value).toLocaleString();
   return typeof value === "string" ? value : "";
@@ -112,18 +143,22 @@ export const ExtListProperties = observer(function ExtListProperties(props: { is
   const { issue } = props;
   const { workspaceSlug, projectId } = useExtRoute(issue.project_id);
   useColumnsReady(workspaceSlug, projectId, true);
-  if (!projectId || !columnsEnabled(workspaceSlug)) return null;
+  if (!projectId) return null;
+  const repeats = repeatsVisible(workspaceSlug, projectId) ? extStore.repeats[projectId]?.[issue.id] : undefined;
+  const chip =
+    "flex h-5 items-center rounded-sm border-[0.5px] border-strong px-2.5 text-caption-sm-regular text-secondary";
   return (
     <>
-      {extStore.visibleColumns(workspaceSlug, projectId).map((d) => {
+      {repeats && (
+        <div title="Repeats" className={chip}>
+          ↻ {repeats}
+        </div>
+      )}
+      {(columnsEnabled(workspaceSlug) ? extStore.visibleColumns(workspaceSlug, projectId) : []).map((d) => {
         const text = displayValue(d, extStore.values[issue.id]?.[d.id] ?? null);
         if (!text) return null;
         return (
-          <div
-            key={d.id}
-            title={d.name}
-            className="flex h-5 items-center rounded-sm border-[0.5px] border-strong px-2.5 text-caption-sm-regular text-secondary"
-          >
+          <div key={d.id} title={d.name} className={chip}>
             {text}
           </div>
         );

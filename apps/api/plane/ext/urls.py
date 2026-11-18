@@ -4,7 +4,7 @@
 
 from django.urls import path
 
-from . import views, views_access
+from . import views, views_access, views_recurrence
 
 WS = "workspaces/<str:slug>"
 PRJ = WS + "/projects/<uuid:project_id>"
@@ -22,11 +22,19 @@ urlpatterns = [
     path(f"{WS}/access/", views_access.AccessMatrixEndpoint.as_view(), name="ext-access"),
     path(f"{WS}/access/grants/", views_access.AccessGrantEndpoint.as_view(), name="ext-access-grants"),
     path(f"{WS}/access/log/", views_access.AccessLogEndpoint.as_view(), name="ext-access-log"),
+    path(f"{WS}/recurrence/", views_recurrence.WorkspaceRecurrenceEndpoint.as_view(), name="ext-recurrence"),
+    path(
+        f"{WS}/recurrence/<uuid:pk>/<str:action>/",
+        views_recurrence.RuleActionEndpoint.as_view(),
+        name="ext-recurrence-action",
+    ),
     path(f"{WS}/handoff/", views.HandoffEndpoint.as_view(), name="ext-handoff"),
     path(f"{PRJ}/bindings/", views.BindingEndpoint.as_view(), name="ext-bindings"),
     path(f"{PRJ}/values/", views.ProjectValuesEndpoint.as_view(), name="ext-project-values"),
     path(f"{PRJ}/columns/", views.ColumnPreferenceEndpoint.as_view(), name="ext-columns"),
     path(f"{ITEM}/values/", views.IssueValuesEndpoint.as_view(), name="ext-values"),
     path(f"{ITEM}/values/<uuid:definition_id>/", views.IssueValueDetailEndpoint.as_view(), name="ext-value"),
+    path(f"{PRJ}/recurrence/", views_recurrence.ProjectRecurrenceEndpoint.as_view(), name="ext-project-recurrence"),
+    path(f"{ITEM}/recurrence/", views_recurrence.ItemRecurrenceEndpoint.as_view(), name="ext-item-recurrence"),
     path(f"{ITEM}/activity/", views.ActivityEndpoint.as_view(), name="ext-activity"),
 ]

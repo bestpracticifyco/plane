@@ -40,6 +40,7 @@ from .models import (
 )
 
 ADMIN, MEMBER, GUEST = 20, 15, 5
+REPEATS_COLUMN_ID = "00000000-0000-4000-8000-000000000001"  # pseudo-definition: the recurrence "Repeats" column
 
 
 # ---------------------------------------------------------------------------------------------
@@ -422,6 +423,7 @@ class ColumnPreferenceEndpoint(ExtBaseView):
         self.require_project_role(slug, project_id, GUEST)
         ids = [str(i) for i in request.data.get("definition_ids", [])]
         valid = set(str(i) for i in ExtPropertyDefinition.objects.filter(workspace=ws, id__in=ids).values_list("id", flat=True))
+        valid.add(REPEATS_COLUMN_ID)
         ids = [i for i in ids if i in valid]
         ExtColumnPreference.objects.update_or_create(user=request.user, project_id=project_id, defaults={"definition_ids": ids})
         return Response({"definition_ids": ids})

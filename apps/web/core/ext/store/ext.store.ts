@@ -5,7 +5,14 @@
 
 import { action, makeObservable, observable, runInAction } from "mobx";
 import { ExtService } from "../services/ext.service";
-import type { TExtBinding, TExtDefinition, TExtFlags, TExtValue } from "../types";
+import type {
+  TExtBinding,
+  TExtDefinition,
+  TExtFlags,
+  TExtRecurrenceInput,
+  TExtRecurrenceRule,
+  TExtValue,
+} from "../types";
 
 /**
  * Module-level MobX store for plane_ext. apps/web has no global provider seam, so patched core
@@ -19,6 +26,10 @@ export class ExtStore {
   values: Record<string, Record<string, TExtValue>> = {};
   columns: Record<string, string[]> = {};
   errors: Record<string, string> = {};
+  /** issueId -> live recurrence rule (null: not repeating) */
+  recurrence: Record<string, TExtRecurrenceRule | null> = {};
+  /** projectId -> issueId -> "Monthly · 4th Sunday" */
+  repeats: Record<string, Record<string, string>> = {};
 
   private service = new ExtService();
   private inflight = new Map<string, Promise<unknown>>();
@@ -31,6 +42,8 @@ export class ExtStore {
       values: observable,
       columns: observable,
       errors: observable,
+      recurrence: observable,
+      repeats: observable,
       setValue: action,
     });
   }
@@ -49,18 +62,30 @@ export class ExtStore {
   /** Flags + definitions for a workspace and bindings for a project. */
   loadProject(ws: string, projectId: string, force = false) {
     return Promise.all([
-      this.once(`flags:${ws}`, async () => {
-        const f = await this.service.getFlags(ws);
-        runInAction(() => (this.flags[ws] = f));
-      }, force),
-      this.once(`defs:${ws}`, async () => {
-        const d = await this.service.getDefinitions(ws);
-        runInAction(() => (this.definitions[ws] = d));
-      }, force),
-      this.once(`bind:${projectId}`, async () => {
-        const b = await this.service.getBindings(ws, projectId);
-        runInAction(() => (this.bindings[projectId] = b));
-      }, force),
+      this.once(
+        `flags:${ws}`,
+        async () => {
+          const f = await this.service.getFlags(ws);
+          runInAction(() => (this.flags[ws] = f));
+        },
+        force
+      ),
+      this.once(
+        `defs:${ws}`,
+        async () => {
+          const d = await this.service.getDefinitions(ws);
+          runInAction(() => (this.definitions[ws] = d));
+        },
+        force
+      ),
+      this.once(
+        `bind:${projectId}`,
+        async () => {
+          const b = await this.service.getBindings(ws, projectId);
+          runInAction(() => (this.bindings[projectId] = b));
+        },
+        force
+      ),
     ]).catch(() => undefined);
   }
 
@@ -89,7 +114,9 @@ export class ExtStore {
 
   async toggleColumn(ws: string, projectId: string, definitionId: string) {
     const current = this.columns[projectId] ?? [];
-    const next = current.includes(definitionId) ? current.filter((i) => i !== definitionId) : [...current, definitionId];
+    const next = current.includes(definitionId)
+      ? current.filter((i) => i !== definitionId)
+      : [...current, definitionId];
     runInAction(() => (this.columns[projectId] = next));
     try {
       const saved = await this.service.setColumns(ws, projectId, next);
@@ -97,6 +124,46 @@ export class ExtStore {
     } catch {
       runInAction(() => (this.columns[projectId] = current));
     }
+  }
+
+  loadRecurrence(ws: string, projectId: string, issueId: string, force = false) {
+    return this.once(
+      `rec:${issueId}`,
+      async () => {
+        const r = await this.service.getRecurrence(ws, projectId, issueId);
+        runInAction(() => (this.recurrence[issueId] = r));
+      },
+      force
+    ).catch(() => undefined);
+  }
+
+  loadProjectRepeats(ws: string, projectId: string, force = false) {
+    return this.once(
+      `reps:${projectId}`,
+      async () => {
+        const r = await this.service.getProjectRepeats(ws, projectId);
+        runInAction(() => (this.repeats[projectId] = r));
+      },
+      force
+    ).catch(() => undefined);
+  }
+
+  /** Saves the rule; throws the server's field errors so the editor can show them. */
+  async saveRecurrence(ws: string, projectId: string, issueId: string, input: TExtRecurrenceInput) {
+    const rule = await this.service.setRecurrence(ws, projectId, issueId, input);
+    runInAction(() => {
+      this.recurrence[issueId] = rule;
+      (this.repeats[projectId] ??= {})[issueId] = rule.summary;
+    });
+    return rule;
+  }
+
+  async stopRecurrence(ws: string, projectId: string, issueId: string) {
+    await this.service.stopRecurrence(ws, projectId, issueId);
+    runInAction(() => {
+      this.recurrence[issueId] = null;
+      if (this.repeats[projectId]) delete this.repeats[projectId][issueId];
+    });
   }
 
   /** Bound, non-archived definitions of a project in binding order. */
